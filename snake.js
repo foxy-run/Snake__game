@@ -2,6 +2,8 @@
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
+const btn = document.querySelector(".restart__button");
+
 // Вызываем картинку игрового поля
 const field = new Image();
 field.src = "images/field.png";
@@ -19,6 +21,12 @@ let box = 50;
 //Счетчик очков
 let score = 0;
 
+//Лучший результат
+let highScore = 0;
+if (localStorage.getItem("bestScore")) {
+    highScore = localStorage.getItem("bestScore")
+};
+
 //Координаты еды
 let food = {
     x: Math.floor((Math.random() * 10 + 1)) * box,
@@ -26,13 +34,15 @@ let food = {
 };
 
 //Координаты змейки
-let snake = [];
-snake[0] = {
-    x: 5 * box,
-    y: 5 * box
-}
+let snake = [
+    { x: 5 * box, y: 5 * box },
+    // { x: 6 * box, y: 5 * box }
+]
 
+
+//Вешаем обработчик событий по нажатию стрелок на клавиатуре
 document.addEventListener('keydown', direction);
+// document.addEventListener('click', re)
 
 let dir;
 
@@ -46,32 +56,37 @@ function direction(event) {
     } else if (event.keyCode == 40 && dir != "up") {
         dir = "down";
     }
-}
+};
 
+
+//Отображаем текст при окончании игры
+function endGame() {
+    ctx.fillStyle = "black";
+    ctx.font = "60px Roboto";
+    ctx.fillText("GAME OVER", box * 2.5, box * 6.5);
+
+    ctx.fillStyle = "black";
+    ctx.font = "50px Roboto";
+    ctx.fillText("Press Restart", box * 3.5, box * 8);
+};
+
+//Прекращаем игру, если змея съела хвост
 function eatTail(head, arr) {
-    for(let i = 0; i < arr.length; i++) {
-        if(head.x == arr[i].x && head.y == arr[i].y ) {
-        clearInterval(game);
-
-        ctx.fillStyle = "black";
-        ctx.font = "60px Roboto";
-        ctx.fillText("GAME OVER", box * 2.5, box * 6.5);
-
-        ctx.fillStyle = "black";
-        ctx.font = "50px Roboto";
-        ctx.fillText("Press F5 to restart", box * 2.5, box * 8);
+    for (let i = 0; i < arr.length; i++) {
+        if (head.x == arr[i].x && head.y == arr[i].y) {
+            clearInterval(game);
         }
     }
-}
+};
 
-//Рисуем игру
+//Игра
 function drawGame() {
     ctx.drawImage(field, 0, 0);
 
     ctx.drawImage(foodImage, food.x, food.y);
 
     for (let i = 0; i < snake.length; i++) {
-        ctx.fillStyle = "dark green";
+        ctx.fillStyle = "white";
         ctx.fillRect(snake[i].x, snake[i].y, box, box);
     };
 
@@ -89,6 +104,10 @@ function drawGame() {
     ctx.font = "50px Roboto";
     ctx.fillText(":", box * 8, box * 0.75);
 
+    ctx.fillStyle = "black";
+    ctx.font = "50px Roboto";
+    ctx.fillText(highScore, box * 8.5, box * 0.75);
+
     let snakeX = snake[0].x;
     let snakeY = snake[0].y;
 
@@ -105,13 +124,7 @@ function drawGame() {
     if (snakeX < box || snakeX > box * 10 || snakeY < box || snakeY > box * 10) {
         clearInterval(game);
 
-        ctx.fillStyle = "black";
-        ctx.font = "60px Roboto";
-        ctx.fillText("GAME OVER", box * 2.5, box * 6.5);
-
-        ctx.fillStyle = "black";
-        ctx.font = "50px Roboto";
-        ctx.fillText("Press F5 to restart", box * 2.5, box * 8);
+        endGame();
     };
 
     if (dir == "left") snakeX -= box;
@@ -127,7 +140,11 @@ function drawGame() {
     eatTail(newHead, snake);
 
     snake.unshift(newHead);
-}
+
+    if (score > highScore) {
+        localStorage.setItem("bestScore", score)
+    }
+};
 
 //Вызываем функцию drawGame каждые 100мс, чтобы картинка отображалась
 let game = setInterval(drawGame, 100);
